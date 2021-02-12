@@ -26,7 +26,7 @@ struct StListView: View {
                         let selectedStData = st.sidAndStname.split(separator: " ").map(String.init)
                         self.id = selectedStData[0]
                         self.stName = selectedStData[1]
-                        let url = URL(string: "https://localhost:8081/view/\(self.id)/\(self.vercode)")!
+                        let url = URL(string: "https://localhost:8081/view/\(self.id)?vercode=\(self.vercode)")!
                         let task = URLSession(configuration: .default, delegate: AllowsSelfSignedCertificateDelegate(), delegateQueue: nil).dataTask(with: url) {(data, response, error) in
                             guard let data = data else { return }
                             self.res=String(data: data, encoding: .utf8)!

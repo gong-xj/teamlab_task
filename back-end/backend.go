@@ -20,7 +20,7 @@ func main() {
 	//gin: framework
 	router := gin.Default()
 	router.GET("/login/:id", login)
-	router.GET("/view/:id/:vercode", view)
+	router.GET("/view/:id", view)
 	router.RunTLS(":8081", "cert.pem", "key.pem") //port, certFile, keyFile
 }
 
@@ -64,23 +64,26 @@ func login(c *gin.Context) {
 	fmt.Println("verification code: ", verCode)
 }
 
-// 2【/view/:id/:verCode)】
+// 2【/view/:id】
 func view(c *gin.Context) {
 	id := c.Param("id")
-	inVerCodeStr := c.Param("vercode")
-	// inVerCodeStr := c.Query("vercode") //【/view/:id(?vercode=xxx)】なら
+	// inVerCodeStr := c.Param("vercode")
+	inVerCodeStr := c.Query("vercode") //【/view/:id(?vercode=xxx)】なら
 
 	inVerCode, _ := strconv.Atoi(inVerCodeStr)
 	verCodeSt, okSt := verCodeMap[id]     // 学生: id -> 認証番号
 	tcId, okTc := verCodeMapTc[inVerCode] // 先生: 認証番号 -> id, ok
 
+	fmt.Println("0", id, inVerCodeStr, inVerCode, verCodeSt, okTc) //test
 	if (inVerCode != verCodeSt && !okTc) || verCode == 0 || inVerCode == 0 || inVerCodeStr == "" {
+		fmt.Println("error: please log in.")
 		c.String(http.StatusOK, "please log in.")
 		return
 	}
 
 	// 【1】/view/:tcId/:tcVercode -> 学生list: id, name
 	if okTc && tcId == id {
+		fmt.Println("1", id, inVerCodeStr, inVerCode, verCodeSt, okTc) //test
 		stList := ""
 		for id, perInfo := range info {
 			if id[:2] == "st" {
