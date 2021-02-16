@@ -12,8 +12,8 @@ import (
 
 func main() {
 	rand.Seed(time.Now().UnixNano())    //seed: 認証番号のために、現時点の時間をrandomな数字の生成のseedにする
-	verCodeMap = make(map[string]int)   //学生: id、認証番号
-	verCodeMapTc = make(map[int]string) //先生: 認証番号、id
+	vercodeMapSt = make(map[string]int) //学生: id、認証番号
+	vercodeMapTc = make(map[int]string) //先生: 認証番号、id
 	info = make(map[string]*person)     //Info: id、{name, phoneNumber...}
 	arrInfo()                           //information(DB)を用意
 
@@ -24,9 +24,9 @@ func main() {
 	router.RunTLS(":8081", "cert.pem", "key.pem") //port, certFile, keyFile
 }
 
-var verCode int
-var verCodeMap map[string]int
-var verCodeMapTc map[int]string
+var vercode int
+var vercodeMapSt map[string]int
+var vercodeMapTc map[int]string
 var info map[string]*person
 
 type person struct {
@@ -46,22 +46,24 @@ func arrInfo() {
 
 //1【login/:id】-> 認証番号、学生/先生: 名前
 func login(c *gin.Context) {
+	// fmt.Println("->login") //test
 	id := c.Param("id")
 	perInfo, ok := info[id]
+	// fmt.Println("0", id, perInfo, ok) //test
 
 	if !ok {
-		c.String(http.StatusOK, "id does not exist.")
+		fmt.Println("id does not exist.")
 		return
 	}
 
-	verCode = rand.Intn(9000) + 1000
+	vercode = rand.Intn(9000) + 1000
 	if id[:2] == "tc" { // 先生
-		verCodeMapTc[verCode] = id
+		vercodeMapTc[vercode] = id
 	} else { // 学生
-		verCodeMap[id] = verCode
+		vercodeMapSt[id] = vercode
 	}
 	c.String(http.StatusOK, perInfo.name)
-	fmt.Println("verification code: ", verCode)
+	fmt.Println("verification code: ", vercode)
 }
 
 // 2【/view/:id】
@@ -71,19 +73,20 @@ func view(c *gin.Context) {
 	inVerCodeStr := c.Query("vercode") //【/view/:id(?vercode=xxx)】なら
 
 	inVerCode, _ := strconv.Atoi(inVerCodeStr)
-	verCodeSt, okSt := verCodeMap[id]     // 学生: id -> 認証番号
-	tcId, okTc := verCodeMapTc[inVerCode] // 先生: 認証番号 -> id, ok
+	vercodeSt, okSt := vercodeMapSt[id]   // 学生: id -> 認証番号
+	tcId, okTc := vercodeMapTc[inVerCode] // 先生: 認証番号 -> id, ok
 
-	fmt.Println("0", id, inVerCodeStr, inVerCode, verCodeSt, okTc) //test
-	if (inVerCode != verCodeSt && !okTc) || verCode == 0 || inVerCode == 0 || inVerCodeStr == "" {
-		fmt.Println("error: please log in.")
-		c.String(http.StatusOK, "please log in.")
+	fmt.Println("0", id, inVerCodeStr, inVerCode, vercodeSt, okTc) //test
+	if (inVerCode != vercodeSt && !okTc) || vercode == 0 || inVerCode == 0 || inVerCodeStr == "" {
+		err := "please log in."
+		fmt.Println(err)
+		c.String(http.StatusOK, err)
 		return
 	}
 
 	// 【1】/view/:tcId/:tcVercode -> 学生list: id, name
 	if okTc && tcId == id {
-		fmt.Println("1", id, inVerCodeStr, inVerCode, verCodeSt, okTc) //test
+		fmt.Println("1", id, inVerCodeStr, inVerCode, vercodeSt, okTc) //test
 		stList := ""
 		for id, perInfo := range info {
 			if id[:2] == "st" {
@@ -95,7 +98,7 @@ func view(c *gin.Context) {
 	}
 	// 【2】/view/:stId/:tcVercode -> 成績list: 学科名 点数
 	//     /view/:stId/:stVercode
-	if (okTc && tcId != id) || (okSt && verCodeSt == inVerCode) {
+	if (okTc && tcId != id) || (okSt && vercodeSt == inVerCode) {
 		perInfo, _ := info[id]
 		scoList := "学科名 点数\n"
 		for i := 0; i < len(perInfo.subArray); i++ {

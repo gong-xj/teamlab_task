@@ -3,7 +3,7 @@ import SwiftUI
 
 struct ContentView: View, Identifiable {
 //    @State var id : String = UserDefaults.standard.string(forKey: "Id") ?? "xh001"
-//    @State var vercode : String = UserDefaults.standard.string(forKey: "Vercode") ?? ""
+//    @State var vercode : String = UserDefaults.standard.string(forKey: "vercode") ?? ""
 //    @State var name : String = UserDefaults.standard.string(forKey: "Name") ?? ""
     @State var id = "st002"
 //    @State var id = "tc1"
@@ -32,7 +32,7 @@ struct ContentView: View, Identifiable {
                             }
                             HStack {
                                 Text("認証番号") //日本語
-                                SecureField("VerCode", text: $vercode) //入力をdotに表示
+                                SecureField("vercode", text: $vercode) //入力をdotに表示
                                 .textFieldStyle(RoundedBorderTextFieldStyle()) //frame
                                 Button(action: {
                                     let url = URL(string: "https://localhost:8081/login/\(self.id)")!
